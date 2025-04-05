@@ -12,7 +12,23 @@ class MyPlugin(Star):
 
         @filter.command("兑换码")
         async def code(self, event: AstrMessageEvent, message: str):
-            yield event.plain_result(f"你发了: {message}")
+            if message == "帮助":
+                yield event.plain_result("/兑换码 暖5|暖4|深空")
+
+            elif message == "暖5": 
+                yield event.plain_result("无限暖暖")
+
+            elif message == "暖4": 
+                yield event.plain_result("闪耀暖暖")
+
+            elif message == "深空": 
+                yield event.plain_result("恋与深空")
+
+            else:
+                yield event.plain_result("暂不支持")
+                
+            yield event.plain_result("笑死")
+
         
     async def terminate(self):
         '''可选择实现 terminate 函数，当插件被卸载/停用时会调用。'''
