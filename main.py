@@ -46,6 +46,8 @@ class MyPlugin(Star):
         ret = ""
         if cmd in ["infinity", "shining", "deepspace"]:
             ret = await self.fetch_codes(cmd)
+            
+            return
 
         elif cmd == "help": 
             ret = "输入【/兑换码 游戏】获取兑换码"
@@ -54,7 +56,25 @@ class MyPlugin(Star):
             ret = "输入【】内的指令【/兑换码 help】获取帮助"
 
         yield event.plain_result(ret)
-
+        @filter.command("test")
+        async def test(self, event: AstrMessageEvent):
+            from astrbot.api.message_components import Node, Plain, Image, Nodes
+            node1 = Node(
+                uin = 2790771190,
+                name = "木木",
+                content=[
+                    Plain("hi111")
+                ]
+            )
+            node2 = Node(
+                uin = 2790771190,
+                name = "木木",
+                content = [
+                    Plain("hi222")
+                ]
+            )
+            nodes = [node1, node2]
+            yield event.chain_result(nodes)
         
     async def terminate(self):
         '''可选择实现 terminate 函数，当插件被卸载/停用时会调用。'''
