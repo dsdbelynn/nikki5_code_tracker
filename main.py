@@ -26,7 +26,7 @@ class MyPlugin(Star):
         except Exception as e:
             return f"获取兑换码时发生错误: {str(e)}"
 
-    def match_cmd(cmd):
+    def match_cmd(self, cmd):
         ret = ""
         if cmd in ["暖5", "无限暖暖", "无暖"]:
             ret = "infinity"
