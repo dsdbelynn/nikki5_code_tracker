@@ -20,7 +20,7 @@ class MyPlugin(Star):
                 async with session.get(url) as response:
                     if response.status == 200:
                         data = await response.json()
-                        return json.dumps(data)  # 使用dumps而不是dump
+                        return json.dumps(data)
                     else:
                         return f"获取兑换码失败，HTTP状态码: {response.status}"
         except Exception as e:
@@ -45,7 +45,7 @@ class MyPlugin(Star):
         cmd = self.match_cmd(message)
         ret = ""
         if cmd in ["infinity", "shining", "deepspace"]:
-            ret = self.fetch_codes(cmd)
+            ret = await self.fetch_codes(cmd)
 
         elif cmd == "help": 
             ret = "输入【/兑换码 游戏】获取兑换码"
