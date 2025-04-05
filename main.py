@@ -3,6 +3,7 @@ from astrbot.api.star import Context, Star, register
 from astrbot.api import logger
 import aiohttp
 import asyncio
+import json
 
 @register("nikki5_code_tracker", "Lynn", "一个普通的兑换码查询插件", "0.0.1")
 class MyPlugin(Star):
@@ -17,7 +18,7 @@ class MyPlugin(Star):
                     async with session.get(url) as response:
                         if response.status == 200:
                             data = await response.json()
-                            return self.format_codes(game_type, data)
+                            return json.dump(data)
                         else:
                             return f"获取兑换码失败，HTTP状态码: {response.status}"
             except Exception as e:
