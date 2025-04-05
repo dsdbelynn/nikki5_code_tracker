@@ -1,8 +1,9 @@
-# helloworld
+# nikki5_code_tracker
 
-AstrBot 插件模板
+AstrBot 插件
 
-A template plugin for AstrBot plugin feature
+从后端服务器获取暖5等游戏的兑换码
+会主动推送新获取到的兑换码
 
 # 支持
 
