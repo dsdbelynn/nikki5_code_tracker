@@ -1,14 +1,27 @@
 from astrbot.api.event import filter, AstrMessageEvent, MessageEventResult
 from astrbot.api.star import Context, Star, register
 from astrbot.api import logger
-
+import aiohttp
+import asyncio
 
 @register("nikki5_code_tracker", "Lynn", "一个普通的兑换码查询插件", "0.0.1")
 class MyPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
         # API基础URL，实际使用时应替换为正确的地址
-        self.base_url = "http://localhost:3000/api/codes"
+        base_url = "http://127.0.0.1:3000/api/codes"    
+        async def fetch_codes(game_type):
+            url = f"{base_url}/{game_type}"
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url) as response:
+                        if response.status == 200:
+                            data = await response.json()
+                            return self.format_codes(game_type, data)
+                        else:
+                            return f"获取兑换码失败，HTTP状态码: {response.status}"
+            except Exception as e:
+                return f"获取兑换码时发生错误: {str(e)}"
 
         def match_cmd(cmd):
             ret = ""
@@ -28,21 +41,15 @@ class MyPlugin(Star):
         async def code(self, event: AstrMessageEvent, message: str):
             cmd = match_cmd(message)
             ret = ""
-            if message == "infinity":
-                ret = "无限暖暖"
+            if cmd in ["infinity", "shining", "deepspace"]:
+                ret = fetch_codes(cmd)
 
-            elif message == "shining": 
-                ret = "闪耀暖暖"
-
-            elif message == "deepspace": 
-                ret = "恋与深空"
-
-            elif message == "help": 
-                ret = "输入/兑换码 游戏获取兑换码"
+            elif cmd == "help": 
+                ret = "输入【/兑换码 游戏】获取兑换码"
 
             else:
                 ret = "输入【】内的指令【/兑换码 help】获取帮助"
-                
+
             yield event.plain_result(ret)
 
         
