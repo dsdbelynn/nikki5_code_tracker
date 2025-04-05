@@ -86,16 +86,7 @@ class MyPlugin(Star):
 
     @filter.command("兑换码")
     def echo(self, event: AstrMessageEvent, message: str):
-        match message:
-            case "暖5" | "无限暖暖" | "无暖" | "无限":
-                api_game_param = "infinity"
-            case "暖4" | "闪耀暖暖" | "闪暖" | "闪耀":
-                api_game_param = "shining"
-            case "深空" | "恋与深空" | "深空之眠" | "恋深":
-                api_game_param = "deepspace"
-            case "help" | "帮助":
-                yield event.plain_result("【/code 暖5】查询无限暖暖兑换码\n【/code 暖4】查询闪耀暖暖兑换码\n【/code 深空】查询恋与深空兑换码")
-        yield event.plain_result("【/code 暖5】查询无限暖暖兑换码\n【/code 暖4】查询闪耀暖暖兑换码\n【/code 深空】查询恋与深空兑换码")
+        yield event.plain_result(f"你发了: {message}")
 
 
     async def terminate(self):
