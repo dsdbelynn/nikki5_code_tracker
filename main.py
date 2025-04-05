@@ -10,6 +10,10 @@ class MyPlugin(Star):
         super().__init__(context)
         # API基础URL，实际使用时应替换为正确的地址
         self.base_url = "http://localhost:3000/api/codes"
+
+        @filter.command("兑换码")
+        async def code(self, event: AstrMessageEvent, message: str):
+            yield event.plain_result(f"你发了: {message}")
         
         # 游戏别名映射到API参数
         self.game_alias_map = {
@@ -83,10 +87,6 @@ class MyPlugin(Star):
             result.append(code_info)
             
         return "\n".join(result)
-
-    @filter.command("兑换码")
-    def echo(self, event: AstrMessageEvent, message: str):
-        yield event.plain_result(f"你发了: {message}")
 
 
     async def terminate(self):
