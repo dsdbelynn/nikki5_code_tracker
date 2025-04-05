@@ -87,11 +87,20 @@ class MyPlugin(Star):
     @filter.command("code")
     async def get_codes(self, event: AstrMessageEvent):
         """处理获取兑换码的命令"""
-        # 获取命令参数
-        params = event.get_message().strip()
+        # 获取命令参数 - 修复从事件获取消息的方式
+        # 从原始消息文本中提取命令后的参数
+        message_text = event.message.strip() if hasattr(event, 'message') else ""
         
-        if not params:
-            # 提供使用说明，包含所有支持的游戏名称
+        # 如果没有消息属性，尝试从命令参数中获取
+        if not message_text and hasattr(event, 'args'):
+            message_text = " ".join(event.args) if event.args else ""
+            
+        # 如果仍然没有内容，检查其他可能的属性
+        if not message_text and hasattr(event, 'content'):
+            message_text = event.content.strip()
+            
+        # 若无参数，显示帮助信息
+        if not message_text:
             help_text = [
                 "【兑换码查询】请在命令后跟随游戏名称：",
                 "无限暖暖 - 支持别名: 暖5, 无暖, 无限",
@@ -104,10 +113,10 @@ class MyPlugin(Star):
             return
         
         # 显示正在处理的消息
-        yield event.plain_result(f"正在获取「{params}」兑换码，请稍候...")
+        yield event.plain_result(f"正在获取「{message_text}」兑换码，请稍候...")
         
         # 获取并返回兑换码数据
-        result = await self.fetch_codes(params)
+        result = await self.fetch_codes(message_text)
         yield event.plain_result(result)
 
     async def terminate(self):
