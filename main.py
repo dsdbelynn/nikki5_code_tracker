@@ -8,7 +8,7 @@ import json
 import datetime
 import os
 
-@register("nikki5_code_tracker", "Lynn", "一个普通的兑换码查询插件", "0.0.1")
+@register("nikki5_code_tracker", "Lynn", "一个普通的兑换码查询插件", "1.0.2")
 class MyPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
@@ -173,6 +173,7 @@ class MyPlugin(Star):
             yield event.plain_result("✅ 您当前已订阅兑换码推送")
         else:
             yield event.plain_result("❌ 您当前未订阅兑换码推送")
+
     @filter.permission_type(PermissionType.ADMIN)
     @filter.command("订阅用户查询")
     async def sub_list(self, event: AstrMessageEvent):
