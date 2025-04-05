@@ -84,40 +84,19 @@ class MyPlugin(Star):
             
         return "\n".join(result)
 
-    @filter.command("code")
-    async def get_codes(self, event: AstrMessageEvent):
-        """处理获取兑换码的命令"""
-        # 获取命令参数 - 修复从事件获取消息的方式
-        # 从原始消息文本中提取命令后的参数
-        message_text = event.message.strip() if hasattr(event, 'message') else ""
-        
-        # 如果没有消息属性，尝试从命令参数中获取
-        if not message_text and hasattr(event, 'args'):
-            message_text = " ".join(event.args) if event.args else ""
-            
-        # 如果仍然没有内容，检查其他可能的属性
-        if not message_text and hasattr(event, 'content'):
-            message_text = event.content.strip()
-            
-        # 若无参数，显示帮助信息
-        if not message_text:
-            help_text = [
-                "【兑换码查询】请在命令后跟随游戏名称：",
-                "无限暖暖 - 支持别名: 暖5, 无暖, 无限",
-                "闪耀暖暖 - 支持别名: 暖4, 闪暖, 闪耀",
-                "恋与深空 - 支持别名: 深空, 恋深",
-                "",
-                "示例: /code 暖5"
-            ]
-            yield event.plain_result("\n".join(help_text))
-            return
-        
-        # 显示正在处理的消息
-        yield event.plain_result(f"正在获取「{message_text}」兑换码，请稍候...")
-        
-        # 获取并返回兑换码数据
-        result = await self.fetch_codes(message_text)
-        yield event.plain_result(result)
+    @filter.command("兑换码")
+    def echo(self, event: AstrMessageEvent, message: str):
+        match message:
+            case "暖5" | "无限暖暖" | "无暖" | "无限":
+                api_game_param = "infinity"
+            case "暖4" | "闪耀暖暖" | "闪暖" | "闪耀":
+                api_game_param = "shining"
+            case "深空" | "恋与深空" | "深空之眠" | "恋深":
+                api_game_param = "deepspace"
+            case "help" | "帮助":
+                yield event.plain_result("【/code 暖5】查询无限暖暖兑换码\n【/code 暖4】查询闪耀暖暖兑换码\n【/code 深空】查询恋与深空兑换码")
+        yield event.plain_result("【/code 暖5】查询无限暖暖兑换码\n【/code 暖4】查询闪耀暖暖兑换码\n【/code 深空】查询恋与深空兑换码")
+
 
     async def terminate(self):
         '''可选择实现 terminate 函数，当插件被卸载/停用时会调用。'''
