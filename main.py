@@ -10,24 +10,40 @@ class MyPlugin(Star):
         # API基础URL，实际使用时应替换为正确的地址
         self.base_url = "http://localhost:3000/api/codes"
 
+        def match_cmd(cmd):
+            ret = ""
+            if cmd in ["暖5", "无限暖暖", "无暖"]:
+                ret = "infinity"
+            elif cmd in ["暖4", "闪耀暖暖", "闪暖"]:
+                ret = "shining"
+            elif cmd in ["深空", "恋与深空"]:
+                ret = "deepspace"
+            elif cmd in ["帮助", "help"]:
+                ret = "help"
+            else:
+                ret = ""
+            return ret
+
         @filter.command("兑换码")
         async def code(self, event: AstrMessageEvent, message: str):
-            if message == "帮助":
-                yield event.plain_result("/兑换码 暖5|暖4|深空")
+            cmd = match_cmd(message)
+            ret = ""
+            if message == "infinity":
+                ret = "无限暖暖"
 
-            elif message == "暖5": 
-                yield event.plain_result("无限暖暖")
+            elif message == "shining": 
+                ret = "闪耀暖暖"
 
-            elif message == "暖4": 
-                yield event.plain_result("闪耀暖暖")
+            elif message == "deepspace": 
+                ret = "恋与深空"
 
-            elif message == "深空": 
-                yield event.plain_result("恋与深空")
+            elif message == "help": 
+                ret = "输入/兑换码 游戏获取兑换码"
 
             else:
-                yield event.plain_result("暂不支持")
+                ret = "输入【】内的指令【/兑换码 help】获取帮助"
                 
-            yield event.plain_result("笑死")
+            yield event.plain_result(ret)
 
         
     async def terminate(self):
