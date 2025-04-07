@@ -8,6 +8,7 @@ import asyncio
 import json
 import datetime
 import os
+import socketio
 
 @register("nikki5_code_tracker", "Lynn", "一个普通的兑换码查询插件", "0.0.1")
 class MyPlugin(Star):
@@ -27,6 +28,45 @@ class MyPlugin(Star):
         
         # 加载已有订阅者
         self.load_subscribers()
+
+        # 初始化Socket.IO客户端
+        self.sio = socketio.AsyncClient()
+        self.setup_socketio()
+        asyncio.create_task(self.connect_websocket())
+    
+    def setup_socketio(self):
+        """设置Socket.IO客户端事件处理器"""
+        
+        @self.sio.event
+        async def connect():
+            logger.info("已连接到WebSocket服务器")
+        
+        @self.sio.event
+        async def disconnect():
+            logger.info("与WebSocket服务器断开连接")
+            # 尝试重新连接
+            asyncio.create_task(self.reconnect_websocket())
+        
+        @self.sio.on('new_code')
+        async def on_new_code(data):
+            try:
+                # 解析接收到的数据
+                game_name = data.get('game_name')
+                key = data.get('key')
+                
+                if not game_name or not key:
+                    logger.error(f"收到无效的兑换码数据: {data}")
+                    return
+                
+                logger.info(f"收到新兑换码: {game_name} - {key}")
+
+                msg = f"🎮 {game_name} 新兑换码: {key}\n可前往官方渠道兑换"
+                message_chain = MessageChain().message(msg)
+                for sub in self.subscribers:
+                    await self.context.send_message(sub, message_chain)
+                
+            except Exception as e:
+                logger.error(f"处理新兑换码时出错: {str(e)}")
     
     def load_subscribers(self):
         """从文件加载订阅者列表"""
@@ -182,6 +222,25 @@ class MyPlugin(Star):
         for sub in self.subscribers:
             await self.context.send_message(sub, message_chain)
 
+    async def connect_websocket(self):
+        """连接到WebSocket服务器"""
+        try:
+            await self.sio.connect('http://127.0.0.1:3000')
+            logger.info("WebSocket连接成功")
+        except Exception as e:
+            logger.error(f"WebSocket连接失败: {str(e)}")
+            # 尝试重新连接
+            asyncio.create_task(self.reconnect_websocket())
+    
+    async def reconnect_websocket(self, delay=5):
+        """在连接断开后尝试重新连接"""
+        await asyncio.sleep(delay)
+        logger.info(f"尝试重新连接WebSocket服务器...")
+        await self.connect_websocket()
+
+
+
+    
             
     @filter.permission_type(PermissionType.ADMIN)
     @filter.command("订阅用户查询")
@@ -199,3 +258,7 @@ class MyPlugin(Star):
         
     async def terminate(self):
         '''可选择实现 terminate 函数，当插件被卸载/停用时会调用。'''
+        # 断开WebSocket连接
+        if self.sio.connected:
+            await self.sio.disconnect()
+            logger.info("WebSocket连接已关闭")
