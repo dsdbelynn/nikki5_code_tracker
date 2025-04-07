@@ -31,6 +31,8 @@ class MyPlugin(Star):
 
         # 初始化Socket.IO客户端
         self.sio = socketio.AsyncClient()
+        self.reconnect_task = None  # 跟踪重连任务
+        self.reconnecting = False  # 重连状态标志
         self.setup_socketio()
         asyncio.create_task(self.connect_websocket())
     
@@ -44,8 +46,9 @@ class MyPlugin(Star):
         @self.sio.event
         async def disconnect():
             logger.info("与WebSocket服务器断开连接")
-            # 尝试重新连接
-            asyncio.create_task(self.reconnect_websocket())
+            # 使用调度重连而不是直接创建任务
+            if not self.reconnecting:
+                self.schedule_reconnect(5)  # 断开连接后5秒尝试重连
         
         @self.sio.on('new_code')
         async def on_new_code(data):
@@ -60,13 +63,55 @@ class MyPlugin(Star):
                 
                 logger.info(f"收到新兑换码: {game_name} - {key}")
 
-                msg = f"🎮 {game_name} 新兑换码: {key}\n可前往官方渠道兑换"
+                game_display_name = self.get_game_display_name(game_name)
+                msg = f"🎮 {game_display_name} 新兑换码: {key}\n可前往官方渠道兑换"
                 message_chain = MessageChain().message(msg)
                 for sub in self.subscribers:
                     await self.context.send_message(sub, message_chain)
                 
             except Exception as e:
                 logger.error(f"处理新兑换码时出错: {str(e)}")
+    
+    def get_game_display_name(self, game_code):
+        """将游戏代码转换为显示名称"""
+        game_names = {
+            "infinity": "无限暖暖",
+            "shining": "闪耀暖暖",
+            "deepspace": "恋与深空"
+        }
+        return game_names.get(game_code, game_code)
+    
+    async def connect_websocket(self):
+        """连接到WebSocket服务器"""
+        # 如果已经在重连，直接返回
+        if self.reconnecting:
+            return
+            
+        try:
+            if not self.sio.connected:
+                self.reconnecting = True
+                logger.info("正在连接到WebSocket服务器...")
+                await self.sio.connect('http://127.0.0.1:3000')
+                logger.info("WebSocket连接成功")
+                self.reconnecting = False
+        except Exception as e:
+            logger.error(f"WebSocket连接失败: {str(e)}")
+            self.reconnecting = False
+            # 安排重连
+            self.schedule_reconnect(5)  # 5秒后重连
+    
+    def schedule_reconnect(self, delay):
+        """调度一个新的重连任务，取消任何现有任务"""
+        if self.reconnect_task and not self.reconnect_task.done():
+            self.reconnect_task.cancel()
+            
+        logger.info(f"计划在{delay}秒后重新连接")
+        self.reconnect_task = asyncio.create_task(self.delayed_reconnect(delay))
+    
+    async def delayed_reconnect(self, delay):
+        """延迟后尝试重新连接"""
+        await asyncio.sleep(delay)
+        await self.connect_websocket()
     
     def load_subscribers(self):
         """从文件加载订阅者列表"""
@@ -86,7 +131,6 @@ class MyPlugin(Star):
         except Exception as e:
             logger.error(f"保存订阅者数据失败: {str(e)}")
     
-
     async def fetch_codes(self, game_type):
         """从API获取兑换码数据"""
         url = f"{self.base_url}/{game_type}"
@@ -221,26 +265,6 @@ class MyPlugin(Star):
         message_chain = MessageChain().message("订阅测试!")
         for sub in self.subscribers:
             await self.context.send_message(sub, message_chain)
-
-    async def connect_websocket(self):
-        """连接到WebSocket服务器"""
-        try:
-            await self.sio.connect('http://127.0.0.1:3000')
-            logger.info("WebSocket连接成功")
-        except Exception as e:
-            logger.error(f"WebSocket连接失败: {str(e)}")
-            # 尝试重新连接
-            asyncio.create_task(self.reconnect_websocket())
-    
-    async def reconnect_websocket(self, delay=5):
-        """在连接断开后尝试重新连接"""
-        await asyncio.sleep(delay)
-        logger.info(f"尝试重新连接WebSocket服务器...")
-        await self.connect_websocket()
-
-
-
-    
             
     @filter.permission_type(PermissionType.ADMIN)
     @filter.command("订阅用户查询")
@@ -253,11 +277,13 @@ class MyPlugin(Star):
         else:
             ret = "❌没有订阅用户"
         yield event.plain_result(ret)
-
-
         
     async def terminate(self):
         '''可选择实现 terminate 函数，当插件被卸载/停用时会调用。'''
+        # 取消重连任务
+        if self.reconnect_task and not self.reconnect_task.done():
+            self.reconnect_task.cancel()
+            
         # 断开WebSocket连接
         if self.sio.connected:
             await self.sio.disconnect()
