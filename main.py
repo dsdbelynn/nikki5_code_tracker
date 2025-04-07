@@ -1,3 +1,4 @@
+from astrbot.api.event import MessageChain
 from astrbot.api.event import filter, AstrMessageEvent
 from astrbot.core.star.filter.permission import PermissionType
 from astrbot.api.star import Context, Star, register
@@ -173,6 +174,14 @@ class MyPlugin(Star):
             yield event.plain_result("✅ 您当前已订阅兑换码推送")
         else:
             yield event.plain_result("❌ 您当前未订阅兑换码推送")
+
+    @filter.permission_type(PermissionType.ADMIN)
+    @filter.command("订阅测试")
+    async def sub_test(self, event: AstrMessageEvent):
+        message_chain = MessageChain().message("订阅测试!")
+        for sub in self.subscribers:
+            await self.context.send_message(sub, message_chain)
+
             
     @filter.permission_type(PermissionType.ADMIN)
     @filter.command("订阅用户查询")
