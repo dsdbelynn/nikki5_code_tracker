@@ -90,7 +90,6 @@ class MyPlugin(Star):
         try:
             if not self.sio.connected:
                 self.reconnecting = True
-                logger.info("正在连接到WebSocket服务器...")
                 await self.sio.connect('http://127.0.0.1:3000')
                 logger.info("WebSocket连接成功")
                 self.reconnecting = False
@@ -104,8 +103,6 @@ class MyPlugin(Star):
         """调度一个新的重连任务，取消任何现有任务"""
         if self.reconnect_task and not self.reconnect_task.done():
             self.reconnect_task.cancel()
-            
-        logger.info(f"计划在{delay}秒后重新连接")
         self.reconnect_task = asyncio.create_task(self.delayed_reconnect(delay))
     
     async def delayed_reconnect(self, delay):
@@ -262,7 +259,7 @@ class MyPlugin(Star):
     @filter.permission_type(PermissionType.ADMIN)
     @filter.command("订阅测试")
     async def sub_test(self, event: AstrMessageEvent):
-        message_chain = MessageChain().message("订阅测试!")
+        message_chain = MessageChain().message("订阅广播测试!")
         for sub in self.subscribers:
             await self.context.send_message(sub, message_chain)
             
