@@ -10,7 +10,7 @@ import datetime
 import os
 import socketio
 
-@register("nikki5_code_tracker", "Lynn", "一个普通的兑换码查询插件", "1.0.3")
+@register("nikki5_code_tracker", "Lynn", "一个普通的兑换码查询插件", "1.0.4")
 class MyPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
