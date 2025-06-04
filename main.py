@@ -40,10 +40,6 @@ class MyPlugin(Star):
     
     def setup_socketio(self):
         """设置Socket.IO客户端事件处理器"""
-        # 先移除所有现有的事件处理器
-        self.sio.eio.off('connect')
-        self.sio.eio.off('disconnect')
-        self.sio.off('new_code')
         """设置Socket.IO客户端事件处理器"""
         
         @self.sio.event
