@@ -10,7 +10,7 @@ import datetime
 import os
 import socketio
 
-@register("nikki5_code_tracker", "Lynn", "一个普通的兑换码查询插件", "1.0.6")
+@register("nikki5_code_tracker", "Lynn", "一个普通的兑换码查询插件", "1.0.7")
 class MyPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
@@ -73,7 +73,7 @@ class MyPlugin(Star):
 
                 game_display_name = self.get_game_display_name(game_name)
                 msg2 = key
-                msg1 = f"🎮 {game_display_name} 兑换码更新啦！\n奖励：{reward}\n有效期:{time}\n快上游戏兑换叭！\n源链接:{url}"
+                msg1 = f"🎮 {game_display_name} 兑换码更新啦！\n兑换码：{key}\n奖励：{reward}\n有效期:{time}\n快上游戏兑换叭！\n源链接:{url}"
                 message_chain1 = MessageChain().message(msg1)
                 message_chain2 = MessageChain().message(msg2)
                 for sub in self.subscribers:
