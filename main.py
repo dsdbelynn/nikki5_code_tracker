@@ -10,12 +10,12 @@ import datetime
 import os
 import socketio
 
-@register("nikki5_code_tracker", "Lynn", "一个普通的兑换码查询插件", "0.0.1")
+@register("nikki5_code_tracker", "Lynn", "一个普通的兑换码查询插件", "1.0.3")
 class MyPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
         # API基础URL，实际使用时应替换为正确的地址
-        self.base_url = "http://127.0.0.1:3000/api/codes"
+        self.base_url = "http://172.17.0.1:3000/api/codes"
         self.subscribers = set()
         # 获取插件所在目录
         plugin_dir = os.path.dirname(os.path.abspath(__file__))
@@ -101,7 +101,7 @@ class MyPlugin(Star):
         try:
             if not self.sio.connected:
                 self.reconnecting = True
-                await self.sio.connect('http://127.0.0.1:3000')
+                await self.sio.connect('http://172.17.0.1:3000')
                 logger.info("WebSocket连接成功")
                 self.reconnecting = False
         except Exception as e:
