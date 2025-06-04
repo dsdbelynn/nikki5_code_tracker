@@ -56,7 +56,10 @@ class MyPlugin(Star):
                 # 解析接收到的数据
                 game_name = data.get('game_name')
                 key = data.get('key')
-                
+                reward = data.get('reward')
+                time = data.get('time')
+                url = data.get('url')
+
                 if not game_name or not key:
                     logger.error(f"收到无效的兑换码数据: {data}")
                     return
@@ -64,19 +67,15 @@ class MyPlugin(Star):
                 logger.info(f"收到新兑换码: {game_name} - {key}")
 
                 game_display_name = self.get_game_display_name(game_name)
-                msg1 = f"🎮 {game_display_name} 兑换码更新啦！"
-                msg2 = key
-                msg3 = "快上游戏兑换叭！"
+                msg1 = key
+                msg2 = f"🎮 {game_display_name} 兑换码更新啦！\n奖励：{reward}\n有效期:{time}\n快上游戏兑换叭！\n源链接:{url}"
                 message_chain1 = MessageChain().message(msg1)
                 message_chain2 = MessageChain().message(msg2)
-                message_chain3 = MessageChain().message(msg3)
                 for sub in self.subscribers:
                     await self.context.send_message(sub, message_chain1)
                     import asyncio
                     await asyncio.sleep(1)  # 延时1秒钟，可以根据需要调整时间
                     await self.context.send_message(sub, message_chain2)
-                    await asyncio.sleep(1)  # 延时1秒钟，可以根据需要调整时间
-                    await self.context.send_message(sub, message_chain3)
                     await asyncio.sleep(1)  # 延时1秒钟，可以根据需要调整时间
 
                 
