@@ -64,10 +64,21 @@ class MyPlugin(Star):
                 logger.info(f"收到新兑换码: {game_name} - {key}")
 
                 game_display_name = self.get_game_display_name(game_name)
-                msg = f"🎮 {game_display_name} 新兑换码: {key}\n可前往官方渠道兑换"
-                message_chain = MessageChain().message(msg)
+                msg1 = f"🎮 {game_display_name} 兑换码更新啦！"
+                msg2 = key
+                msg3 = "快上游戏兑换叭！"
+                message_chain1 = MessageChain().message(msg1)
+                message_chain2 = MessageChain().message(msg2)
+                message_chain3 = MessageChain().message(msg3)
                 for sub in self.subscribers:
-                    await self.context.send_message(sub, message_chain)
+                    await self.context.send_message(sub, message_chain1)
+                    import asyncio
+                    await asyncio.sleep(1)  # 延时1秒钟，可以根据需要调整时间
+                    await self.context.send_message(sub, message_chain2)
+                    await asyncio.sleep(1)  # 延时1秒钟，可以根据需要调整时间
+                    await self.context.send_message(sub, message_chain3)
+                    await asyncio.sleep(1)  # 延时1秒钟，可以根据需要调整时间
+
                 
             except Exception as e:
                 logger.error(f"处理新兑换码时出错: {str(e)}")
@@ -264,8 +275,23 @@ class MyPlugin(Star):
             await self.context.send_message(sub, message_chain)
             
     @filter.permission_type(PermissionType.ADMIN)
-    @filter.command("订阅用户查询")
+    @filter.command("订阅列表查询")
     async def sub_list(self, event: AstrMessageEvent):
+        ret = ""
+        if len(self.subscribers) > 0:
+            for s in self.subscribers:
+                ret += s
+                ret += "\n"
+        else:
+            ret = "❌没有订阅用户"
+        yield event.plain_result(ret)
+
+    @filter.permission_type(PermissionType.ADMIN)
+    @filter.command("重载订阅列表")
+    async def sub_refresh(self, event: AstrMessageEvent):
+        self.load_subscribers()        
+        ret = "✅ 刷新成功"
+        yield event.plain_result(ret)
         ret = ""
         if len(self.subscribers) > 0:
             for s in self.subscribers:
