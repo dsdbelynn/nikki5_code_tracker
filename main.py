@@ -14,6 +14,8 @@ import socketio
 class MyPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
+        
+        self.event_counter = 0  # 添加事件计数器
         # API基础URL，实际使用时应替换为正确的地址
         self.base_url = "http://172.17.0.1:3000/api/codes"
         self.subscribers = set()
@@ -38,6 +40,11 @@ class MyPlugin(Star):
     
     def setup_socketio(self):
         """设置Socket.IO客户端事件处理器"""
+        # 先移除所有现有的事件处理器
+        self.sio.eio.off('connect')
+        self.sio.eio.off('disconnect')
+        self.sio.off('new_code')
+        """设置Socket.IO客户端事件处理器"""
         
         @self.sio.event
         async def connect():
@@ -52,6 +59,8 @@ class MyPlugin(Star):
         
         @self.sio.on('new_code')
         async def on_new_code(data):
+            self.event_counter += 1
+            logger.info(f"收到第 {self.event_counter} 个WebSocket事件: {data}")
             try:
                 # 解析接收到的数据
                 game_name = data.get('game_name')
@@ -98,16 +107,21 @@ class MyPlugin(Star):
             return
             
         try:
-            if not self.sio.connected:
-                self.reconnecting = True
-                await self.sio.connect('http://172.17.0.1:3000')
-                logger.info("WebSocket连接成功")
-                self.reconnecting = False
+            # 如果已连接，先断开
+            if self.sio.connected:
+                await self.sio.disconnect()
+                await asyncio.sleep(1)  # 等待完全断开
+                
+            self.reconnecting = True
+            # 重新设置事件处理器
+            self.setup_socketio()
+            await self.sio.connect('http://172.17.0.1:3000')
+            logger.info("WebSocket连接成功")
+            self.reconnecting = False
         except Exception as e:
             logger.error(f"WebSocket连接失败: {str(e)}")
             self.reconnecting = False
-            # 安排重连
-            self.schedule_reconnect(5)  # 5秒后重连
+            self.schedule_reconnect(5)
     
     def schedule_reconnect(self, delay):
         """调度一个新的重连任务，取消任何现有任务"""
