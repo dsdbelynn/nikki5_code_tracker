@@ -10,7 +10,7 @@ import datetime
 import os
 import socketio
 
-@register("nikki5_code_tracker", "Lynn", "一个普通的兑换码查询插件", "1.0.7")
+@register("nikki5_code_tracker", "Lynn", "一个普通的兑换码查询插件", "1.0.8")
 class MyPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
@@ -99,38 +99,37 @@ class MyPlugin(Star):
         }
         return game_names.get(game_code, game_code)
     
-async def connect_websocket(self):
-    """连接到WebSocket服务器"""
-    # 如果已经在重连，直接返回
-    if self.reconnecting:
-        return
-        
-    try:
-        self.reconnecting = True
-        
-        # 强制断开并重置客户端状态
+    async def connect_websocket(self):
+        """连接到WebSocket服务器"""
+        # 如果已经在重连，直接返回
+        if self.reconnecting:
+            return
+            
         try:
-            if self.sio.connected:
-                await self.sio.disconnect()
-            await asyncio.sleep(1)  # 等待完全断开
-        except Exception as disconnect_error:
-            logger.info(f"断开连接时的错误（可以忽略）: {disconnect_error}")
+            self.reconnecting = True
+            
+            # 强制断开并重置客户端状态
+            try:
+                if self.sio.connected:
+                    await self.sio.disconnect()
+                await asyncio.sleep(1)  # 等待完全断开
+            except Exception as disconnect_error:
+                logger.info(f"断开连接时的错误（可以忽略）: {disconnect_error}")
+            
+            # 创建新的Socket.IO客户端实例以确保干净的状态
+            self.sio = socketio.AsyncClient()
+            self.setup_socketio()  # 重新设置事件处理器
+            
+            # 尝试连接
+            await self.sio.connect('http://172.17.0.1:3000')
+            logger.info("WebSocket连接成功")
+            self.reconnecting = False
         
-        # 创建新的Socket.IO客户端实例以确保干净的状态
-        self.sio = socketio.AsyncClient()
-        self.setup_socketio()  # 重新设置事件处理器
-        
-        # 尝试连接
-        await self.sio.connect('http://172.17.0.1:3000')
-        logger.info("WebSocket连接成功")
-        self.reconnecting = False
-        
-    except Exception as e:
-        logger.error(f"WebSocket连接失败: {str(e)}")
-        self.reconnecting = False
-        self.schedule_reconnect(10)  # 延长重连间隔到10秒
+        except Exception as e:
+            logger.error(f"WebSocket连接失败: {str(e)}")
+            self.reconnecting = False
+            self.schedule_reconnect(10)  # 延长重连间隔到10秒
 
-    
     def schedule_reconnect(self, delay):
         """调度一个新的重连任务，取消任何现有任务"""
         if self.reconnect_task and not self.reconnect_task.done():
@@ -148,7 +147,6 @@ async def connect_websocket(self):
             if delay < 60:  # 最大延迟60秒
                 self.schedule_reconnect(delay * 2)  # 指数退避
 
-    
     def load_subscribers(self):
         """从文件加载订阅者列表"""
         try:
