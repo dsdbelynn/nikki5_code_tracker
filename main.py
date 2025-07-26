@@ -18,7 +18,7 @@ SUBSCRIBERS_FILE_PATH = "/AstrBot/data/subscribers.json"
 # 全局变量：存储插件实例，用于清理旧连接
 _plugin_instances = {}
 
-@register("nikki5_code_tracker", "Lynn", "一个普通的兑换码查询插件", "1.0.12")
+@register("nikki5_code_tracker", "Lynn", "一个普通的兑换码查询插件", "1.0.13")
 class MyPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
@@ -370,6 +370,7 @@ class MyPlugin(Star):
                 if len(val) > 0:
                     for key in val:
                         yield event.plain_result(key)
+                        await asyncio.sleep(1)  # 延时1秒钟                        
                 else:
                     yield event.plain_result("暂无兑换码")
                 ret = "详细信息请查看 http://code.infinitynikki.top/"
@@ -431,6 +432,7 @@ class MyPlugin(Star):
         message_chain = MessageChain().message(f"订阅广播测试! (实例 {self.instance_id})")
         for sub in self.subscribers:
             await self.context.send_message(sub, message_chain)
+            await asyncio.sleep(1)  # 延时1秒钟
             
     @filter.permission_type(PermissionType.ADMIN)
     @filter.command("订阅列表查询")
