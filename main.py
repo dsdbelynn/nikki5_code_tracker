@@ -18,7 +18,7 @@ SUBSCRIBERS_FILE_PATH = "/AstrBot/data/subscribers.json"
 # 全局变量：存储插件实例，用于清理旧连接
 _plugin_instances = {}
 
-@register("nikki5_code_tracker", "Lynn", "一个普通的兑换码查询插件", "1.0.11")
+@register("nikki5_code_tracker", "Lynn", "一个普通的兑换码查询插件", "1.0.12")
 class MyPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
@@ -280,17 +280,42 @@ class MyPlugin(Star):
     
     async def fetch_codes(self, game_type):
         """从API获取兑换码数据"""
-        url = f"{self.base_url}/{game_type}"
+        import time
+        # 添加时间戳参数强制绕过缓存
+        url = f"{self.base_url}/{game_type}?_t={int(time.time() * 1000)}"
+        
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url) as response:
+            # 创建新的连接器，禁用连接复用
+            connector = aiohttp.TCPConnector(
+                limit=0,           # 不限制连接数
+                limit_per_host=0,  # 不限制每个主机的连接数
+                ttl_dns_cache=0,   # 禁用DNS缓存
+                use_dns_cache=False # 不使用DNS缓存
+            )
+            
+            # 每次都创建新的session
+            async with aiohttp.ClientSession(connector=connector) as session:
+                # 设置强制刷新的请求头
+                headers = {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+                    'Pragma': 'no-cache',
+                    'Expires': '0',
+                    'User-Agent': f'NikkiCodeTracker/{time.time()}'  # 每次不同的User-Agent
+                }
+                
+                async with session.get(url, headers=headers) as response:
                     if response.status == 200:
                         data = await response.json()
+                        logger.info(f"成功获取 {len(data) if isinstance(data, list) else 'unknown'} 条兑换码数据")
                         return data
                     else:
+                        logger.error(f"获取兑换码失败，HTTP状态码: {response.status}")
                         return f"获取兑换码失败，HTTP状态码: {response.status}"
         except Exception as e:
+            logger.error(f"获取兑换码时发生错误: {str(e)}")
             return f"获取兑换码时发生错误: {str(e)}"
+
+
 
     def match_cmd(self, cmd):
         ret = ""
@@ -347,7 +372,7 @@ class MyPlugin(Star):
                         yield event.plain_result(key)
                 else:
                     yield event.plain_result("暂无兑换码")
-                ret = "详细信息请查看 https://code.490816852.xyz"
+                ret = "详细信息请查看 http://code.infinitynikki.top/"
 
         elif cmd == "help": 
             ret = "输入【/兑换码 游戏】获取兑换码"
@@ -359,7 +384,7 @@ class MyPlugin(Star):
         
     @filter.command("兑换码网站")
     async def code_web(self, event: AstrMessageEvent):
-        yield event.plain_result("https://code.490816852.xyz")
+        yield event.plain_result("http://code.infinitynikki.top/")
     
     @filter.command("订阅兑换码")
     async def sub_code(self, event: AstrMessageEvent):
