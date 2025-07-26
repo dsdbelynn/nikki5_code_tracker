@@ -10,9 +10,10 @@ import datetime
 import os
 import socketio
 
-SUBSCRIBERS_FILE_PATH = os.path.expanduser("~/code_tracker_config/subscribers.json")
+# 使用Docker挂载的数据目录，确保数据持久化
+SUBSCRIBERS_FILE_PATH = "/AstrBot/data/subscribers.json"
 
-@register("nikki5_code_tracker", "Lynn", "一个普通的兑换码查询插件", "1.0.9")
+@register("nikki5_code_tracker", "Lynn", "一个普通的兑换码查询插件", "1.0.10")
 class MyPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
@@ -27,7 +28,9 @@ class MyPlugin(Star):
         
         # 确保配置目录存在
         os.makedirs(os.path.dirname(self.data_file), exist_ok=True)
-
+        
+        # 打印路径信息便于调试
+        logger.info(f"订阅文件保存路径: {self.data_file}")
         
         # 加载已有订阅者
         self.load_subscribers()
