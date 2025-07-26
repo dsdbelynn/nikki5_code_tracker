@@ -10,7 +10,9 @@ import datetime
 import os
 import socketio
 
-@register("nikki5_code_tracker", "Lynn", "一个普通的兑换码查询插件", "1.0.8")
+SUBSCRIBERS_FILE_PATH = os.path.expanduser("~/code_tracker_config/subscribers.json")
+
+@register("nikki5_code_tracker", "Lynn", "一个普通的兑换码查询插件", "1.0.9")
 class MyPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
@@ -19,14 +21,13 @@ class MyPlugin(Star):
         # API基础URL，实际使用时应替换为正确的地址
         self.base_url = "http://172.17.0.1:3000/api/codes"
         self.subscribers = set()
-        # 获取插件所在目录
-        plugin_dir = os.path.dirname(os.path.abspath(__file__))
-        # 创建数据目录
-        data_dir = os.path.join(plugin_dir, "data")
-        os.makedirs(data_dir, exist_ok=True)
         
-        # 设置数据文件路径
-        self.data_file = os.path.join(data_dir, "subscribers.json")
+        # 使用全局配置的数据文件路径
+        self.data_file = SUBSCRIBERS_FILE_PATH
+        
+        # 确保配置目录存在
+        os.makedirs(os.path.dirname(self.data_file), exist_ok=True)
+
         
         # 加载已有订阅者
         self.load_subscribers()
